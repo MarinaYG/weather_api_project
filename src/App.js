@@ -6,82 +6,108 @@ import Card from 'react-bootstrap/Card';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-
-
+import Button from 'react-bootstrap/Button';
+import Spinner from 'react-bootstrap/Spinner';
 
 function App() {
 
   const [weatherData, setWeatherData] = useState([]);
   const [city, setCity] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState();
+
+  const unitTypeSymbol = {
+    'imperial': '°F',
+    'metric': '°C',
+    '': 'K',
+  };
+
+  //set unit type
+  const unitType = 'imperial';
+  // const unitType = '';
+  // const unitType = 'metric';
 
 
   //Make api call to openweathermap api
   async function getWeatherData() {
-    //Set loading boolean to true so that we know to show loading text
-    setLoading(true);
+    try {
+      setError();
+      setWeatherData([]);
+      setLoading(true);
 
-    //set latitude and longitude for specific location
-    const latitude = '40.712776';
-    const longitude = '-74.005974';
+      //get longitude and latitude based on city that user inputs
+      let resp = await axios.get(`http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=5&appid=49683f3f5afad3b6c0d3dd5c3b1a9028`);
+      const lat = resp.data[0].lat;
+      const long = resp.data[0].lon;
 
-    //set your api key here
-    const apiKey = '';
+      //set your api key here
+      const apiKey = '49683f3f5afad3b6c0d3dd5c3b1a9028';
 
-    //Make weather api call using axios
-    const resp = await axios.get(`https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=imperial`);
-    setWeatherData(resp.data.list);
-    setCity(resp.data.city.name);
+      //Make weather api call using axios
+      const weatherData = await axios.get(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${long}&appid=${apiKey}&units=${unitType}`);
+      setWeatherData(weatherData.data.list);
 
-    //Set loading boolean to false
-    setLoading(false);
+    } catch (e) {
+      console.log(47, e);
+      setError(e);
+    } finally {
+      setLoading(false);
+    }
+
   }
-
-  useEffect(() => {
-    getWeatherData();
-  }, []);
 
 
 
   return (
     <>
 
-      {loading ? "Loading..." : <Container>
-        <Row className="d-flex">
-          <div className='text-center mt-3'>
-            <h3>
-              Weather in {city}
-            </h3>
-          </div>
+      {loading ?
+        <div className='w-100 min-vh-100 d-flex justify-content-center align-items-center'>
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+        </div>
+        : <Container>
+          <Row className="d-flex">
+            <div className='text-center mt-5'>
+              <input onChange={(e) => { setCity(e.target.value) }} />
+              <Button className='ms-2' onClick={getWeatherData} variant="primary">Submit</Button>{' '}
 
-          {weatherData.map((weatherData, index) =>
-            <Col sm={4} className="mt-3" key={index}>
-              <Card className="p-3 shadow border-0 mt-3 rounded">
-                <div className='d-flex justify-content-between'>
-                  <div>
-                    {weatherData.dt_txt}
-                  </div>
-                  <div>
-                    Current: {weatherData.main.temp}
-                  </div>
-                </div>
-                <div className="d-flex justify-content-center">
-                  <img src={`http://openweathermap.org/img/wn/${weatherData.weather[0].icon}@2x.png`} />
-                </div>
-                <div className='d-flex justify-content-between'>
-                  <div>
-                    {weatherData.weather[0].description}
-                  </div>
-                  <div>
-                    Feels like  {weatherData.main.feels_like}
-                  </div>
-                </div>
-              </Card>
-            </Col>
-          )}
-        </Row>
+              {error ? <div className='text-danger'>
+                Can't find city
+              </div> : <h3 className='mt-3'>  Weather in {city}
+              </h3>}
+            </div>
 
-      </Container>
+            {weatherData.map((weatherData, index) =>
+              <Col sm={4} className="mt-3" key={index}>
+                <Card className="p-3 shadow border-0 mt-3 rounded">
+                  <div className='d-flex justify-content-between'>
+                    <div>
+                      {weatherData.dt_txt}
+                    </div>
+                    <div>
+
+                      Current: {weatherData.main.temp} {unitTypeSymbol[unitType]}
+                    </div>
+                  </div>
+                  <div className="d-flex justify-content-center">
+                    <img src={`http://openweathermap.org/img/wn/${weatherData.weather[0].icon}@2x.png`} />
+                  </div>
+                  <div className='d-flex justify-content-between'>
+                    <div>
+                      {weatherData.weather[0].main}
+                    </div>
+                    <div>
+                      Feels like  {weatherData.main.feels_like} {unitTypeSymbol[unitType]}
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+            )}
+          </Row>
+
+        </Container>
       }
 
     </>
