@@ -41,7 +41,7 @@ function App() {
       const long = resp.data[0].lon;
 
       //set your api key here
-      const apiKey = '49683f3f5afad3b6c0d3dd5c3b1a9028';
+      const apiKey = '';
 
       //Make weather api call using axios
       const weatherData = await axios.get(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${long}&appid=${apiKey}&units=${unitType}`);
