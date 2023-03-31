@@ -1,117 +1,67 @@
+import axios from "axios";
+import { useState } from "react";
 
-import './App.css';
-import axios from 'axios';
-import { useEffect, useState } from 'react';
-import Card from 'react-bootstrap/Card';
-import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
-import Button from 'react-bootstrap/Button';
-import Spinner from 'react-bootstrap/Spinner';
+export default function App (){
 
-function App() {
+    const [data, setData] =useState({})
+    const [location, setLocation] = useState('')
 
-  const [weatherData, setWeatherData] = useState([]);
-  const [city, setCity] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=imperial&appid=895284fb2d2c50a520ea537456963d9c`
 
-  const unitTypeSymbol = {
-    'imperial': '°F',
-    'metric': '°C',
-    '': 'K',
-  };
-
-  //set unit type
-  const unitType = 'imperial';
-  // const unitType = '';
-  // const unitType = 'metric';
-
-
-  //Make api call to openweathermap api
-  async function getWeatherData() {
-    try {
-      setError();
-      setWeatherData([]);
-      setLoading(true);
-
-      //get longitude and latitude based on city that user inputs
-      let resp = await axios.get(`http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=5&appid=49683f3f5afad3b6c0d3dd5c3b1a9028`);
-      const lat = resp.data[0].lat;
-      const long = resp.data[0].lon;
-
-      //set your api key here
-      const apiKey = '';
-
-      //Make weather api call using axios
-      const weatherData = await axios.get(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${long}&appid=${apiKey}&units=${unitType}`);
-      setWeatherData(weatherData.data.list);
-
-    } catch (e) {
-      console.log(47, e);
-      setError(e);
-    } finally {
-      setLoading(false);
+    const searchLocation = (event) =>{
+      if(event.key ==="Enter"){
+        axios.get(url).then((resp) =>{
+          setData(resp.data)
+console.log(resp.data)
+          
+        })
+       setLocation('')
+      }
     }
 
-  }
-
-
-
-  return (
-    <>
-
-      {loading ?
-        <div className='w-100 min-vh-100 d-flex justify-content-center align-items-center'>
-          <Spinner animation="border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </Spinner>
+    return (
+      <div className="app">
+        <div className="search">
+          <input
+            value={location}
+            onChange={event => setLocation(event.target.value)}
+            onKeyPress={searchLocation}
+            placeholder='Enter Location'
+            type="text" />
         </div>
-        : <Container>
-          <Row className="d-flex">
-            <div className='text-center mt-5'>
-              <input onChange={(e) => { setCity(e.target.value) }} />
-              <Button className='ms-2' onClick={getWeatherData} variant="primary">Submit</Button>{' '}
-
-              {error ? <div className='text-danger'>
-                Can't find city
-              </div> : <h3 className='mt-3'>  Weather in {city}
-              </h3>}
+        <div className="container">
+          <div className="top">
+            <div className="location">
+              <p>{data.name}</p>
             </div>
-
-            {weatherData.map((weatherData, index) =>
-              <Col sm={4} className="mt-3" key={index}>
-                <Card className="p-3 shadow border-0 mt-3 rounded">
-                  <div className='d-flex justify-content-between'>
-                    <div>
-                      {weatherData.dt_txt}
-                    </div>
-                    <div>
-
-                      Current: {weatherData.main.temp} {unitTypeSymbol[unitType]}
-                    </div>
-                  </div>
-                  <div className="d-flex justify-content-center">
-                    <img src={`http://openweathermap.org/img/wn/${weatherData.weather[0].icon}@2x.png`} />
-                  </div>
-                  <div className='d-flex justify-content-between'>
-                    <div>
-                      {weatherData.weather[0].main}
-                    </div>
-                    <div>
-                      Feels like  {weatherData.main.feels_like} {unitTypeSymbol[unitType]}
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-            )}
-          </Row>
-
-        </Container>
-      }
-
-    </>
-  );
-}
-
-export default App;
+            <div className="temp">
+              {data.main ? <h1>{data.main.temp.toFixed()}°F</h1> : null}
+            </div>
+            <div className="description">
+              {data.weather ? <p>{data.weather[0].main}</p> : null}
+            </div>
+          </div>
+  
+          {data.name !== undefined &&
+            <div className="bottom">
+              <div className="feels">
+                {data.main ? <p className='bold'>{data.main.feels_like.toFixed()}°F</p> : null}
+                <p>Feels Like</p>
+              </div>
+              <div className="humidity">
+                {data.main ? <p className='bold'>{data.main.humidity}%</p> : null}
+                <p>Humidity</p>
+              </div>
+              <div className="wind">
+                {data.wind ? <p className='bold'>{data.wind.speed.toFixed()} MPH</p> : null}
+                <p>Wind Speed</p>
+              </div>
+            </div>
+          }
+  
+  
+  
+        </div>
+      </div>
+    );
+  }
